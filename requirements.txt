@@ -1,0 +1,9 @@
+langchain
+langchain-community
+langchain-huggingface
+sentence-transformers
+faiss-cpu
+streamlit
+pypdf
+langchain-openai
+urllib3==1.26.15
