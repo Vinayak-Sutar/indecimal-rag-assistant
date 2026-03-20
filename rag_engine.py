@@ -112,6 +112,7 @@ def generate_answer(prompt, vectorstore, llm, st_messages, top_k=3):
     try:
         answer = rag_chain.invoke(prompt)
     except Exception as e:
+        source_documents = []  # Hide retrieved documents on error
         error_msg = str(e).lower()
         if "429" in error_msg or "rate limit" in error_msg:
             answer = "Looks like the free rate limit has been reached. Please try again later."
