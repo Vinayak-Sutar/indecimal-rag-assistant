@@ -19,7 +19,10 @@ def instantiate_llm(model_choice, local_model_name="mistral"):
     """
     Initializes and returns the language model based on the user's selection.
     """
-    # OpenRouter Logic for Deployment
+    if model_choice == "Local (Ollama)":
+        return Ollama(model=local_model_name, temperature=0.3)
+
+    # OpenRouter Logic
     openrouter_api_key = None
     try:
         if os.path.exists("./secret.txt"):
@@ -38,6 +41,7 @@ def instantiate_llm(model_choice, local_model_name="mistral"):
         return ChatOpenAI(
             base_url="https://openrouter.ai/api/v1",
             model="nvidia/nemotron-3-nano-30b-a3b:free",
+            temperature=0.3,
             default_headers={
                 "HTTP-Referer": "https://github.com/vinayak/indecimal",
                 "X-Title": "Indecimal Assistant",
@@ -47,16 +51,14 @@ def instantiate_llm(model_choice, local_model_name="mistral"):
 
 
 # Prompt template enforcing Anti-Hallucination but allowing Conversation History
-PROMPT_TEMPLATE = """You are a highly restricted AI assistant. 
+PROMPT_TEMPLATE = """You are a strictly objective and highly restricted AI assistant.
 
-CRITICAL RULES:
-1. You must NOT use any outside knowledge, general knowledge, or training data to answer the question.
-2. You have TWO valid sources of information: 
-   - The 'Context' (Retrieved document chunks)
-   - The 'Previous Chat History'
-3. If the user asks a conversational question (e.g., "What was my last question?", "Hello"), answer using the Previous Chat History or politely greet them.
-4. For factual questions, if the answer is NOT explicitly stated in the provided Context, you must reply EXACTLY with: "I cannot answer this question because the information is not present in the provided documents."
-5. Do not attempt to guess, infer, or hallucinate factual information.
+CRITICAL INSTRUCTIONS:
+1. You are strictly forbidden from using any outside knowledge, pre-training data, or general knowledge.
+2. Your ONLY sources of facts are the provided 'Context' and 'Previous Chat History'.
+3. If the user asks a factual question, you must verify that the answer is explicitly contained in the provided Context.
+4. If the exact answer to the user's question cannot be found in the Context below, you MUST reply with EXACTLY this string: "I cannot answer this question because the information is not present in the provided documents." Do not output anything else.
+5. Do not guess, do not infer, do not extrapolate, and do not invent information if the direct answer is missing.
 
 Previous Chat History:
 {chat_history}
@@ -101,12 +103,20 @@ def generate_answer(prompt, vectorstore, llm, st_messages, top_k=3):
     for msg in st_messages[:-1]:
         role = "User" if msg["role"] == "user" else "Assistant"
         chat_history_str += f"{role}: {msg['content']}\n"
-        
-    rag_chain, retriever = build_rag_chain(vectorstore, llm, chat_history_str, top_k=top_k)
+
+    rag_chain, retriever = build_rag_chain(
+        vectorstore, llm, chat_history_str, top_k=top_k)
 
     # Retrieve docs for UI transparency, and run generation
     source_documents = retriever.invoke(prompt)
-    answer = rag_chain.invoke(prompt)
+    try:
+        answer = rag_chain.invoke(prompt)
+    except Exception as e:
+        error_msg = str(e).lower()
+        if "429" in error_msg or "rate limit" in error_msg:
+            answer = "Looks like the free rate limit has been reached. Please try again later."
+        else:
+            answer = f"An unexpected error occurred: {str(e)}"
 
     return answer, source_documents
 
