@@ -115,7 +115,7 @@ def generate_answer(prompt, vectorstore, llm, st_messages, top_k=3):
         source_documents = []  # Hide retrieved documents on error
         error_msg = str(e).lower()
         if "429" in error_msg or "rate limit" in error_msg:
-            answer = "Looks like the free rate limit has been reached. Please try again later."
+            answer = "Looks like the free tier rate limit has been reached. Please try again later."
         else:
             answer = f"An unexpected error occurred: {str(e)}"
 
