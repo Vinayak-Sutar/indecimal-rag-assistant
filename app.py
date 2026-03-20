@@ -52,6 +52,9 @@ with st.sidebar:
     else:
         st.error("No API key found in Streamlit secrets.")
 
+    st.markdown("---")
+    top_k = st.slider("Top-k Document Retrieval", min_value=1, max_value=8, value=3, help="How many knowledge chunks to inject into the LLM logic.")
+
     st.divider()
 
     # 2. Knowledge Base Status & Controls
@@ -165,7 +168,8 @@ if prompt := st.chat_input("Ask a question (e.g., 'What factors affect construct
                     prompt=prompt,
                     vectorstore=st.session_state.vectorstore,
                     llm=llm,
-                    st_messages=st.session_state.messages
+                    st_messages=st.session_state.messages,
+                    top_k=top_k
                 )
 
                 st.markdown(answer)

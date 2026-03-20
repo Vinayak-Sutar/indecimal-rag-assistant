@@ -68,11 +68,11 @@ Question: {question}
 Answer:"""
 
 
-def build_rag_chain(vectorstore, llm, chat_history_str):
+def build_rag_chain(vectorstore, llm, chat_history_str, top_k=3):
     """
     Constructs the LangChain Expression Language (LCEL) chain.
     """
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+    retriever = vectorstore.as_retriever(search_kwargs={"k": top_k})
     qa_prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
 
     def format_docs(docs):
@@ -91,7 +91,7 @@ def build_rag_chain(vectorstore, llm, chat_history_str):
     return rag_chain, retriever
 
 
-def generate_answer(prompt, vectorstore, llm, st_messages):
+def generate_answer(prompt, vectorstore, llm, st_messages, top_k=3):
     """
     Parses chat history and triggers the RAG generation.
     Returns the final answer string and the source chunks used.
@@ -101,8 +101,8 @@ def generate_answer(prompt, vectorstore, llm, st_messages):
     for msg in st_messages[:-1]:
         role = "User" if msg["role"] == "user" else "Assistant"
         chat_history_str += f"{role}: {msg['content']}\n"
-
-    rag_chain, retriever = build_rag_chain(vectorstore, llm, chat_history_str)
+        
+    rag_chain, retriever = build_rag_chain(vectorstore, llm, chat_history_str, top_k=top_k)
 
     # Retrieve docs for UI transparency, and run generation
     source_documents = retriever.invoke(prompt)
