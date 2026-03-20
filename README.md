@@ -7,7 +7,6 @@ This repository contains a Retrieval-Augmented Generation (RAG) pipeline built f
 ### Prerequisites
 * **Python 3.10+** (Tested on Python 3.10)
 * **[Ollama](https://ollama.com/)** (Optional, only required if you want to run offline local inference)
-* An **Nvidia GPU** is highly recommended for running local models, though it is not strictly required.
 
 ### Installation Instructions
 1. Clone the repository and navigate to the project directory.
